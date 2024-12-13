@@ -9,7 +9,11 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(usmap)
 
+<<<<<<< Updated upstream
 load("https://github.com/nbiler/Data-and-Society-Final/raw/refs/heads/main/NSDUH%20dataset/NSDUH_2023.Rdata")
+=======
+load("~/GitHub/Data-and-Society-Final/NSDUH dataset/NSDUH_2023.Rdata")
+>>>>>>> Stashed changes
 ```
 
 
