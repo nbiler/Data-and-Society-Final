@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(usmap)
 
-load("~/GitHub/Data-and-Society-Final/NSDUH dataset/NSDUH_2023.Rdata")
+load("https://github.com/nbiler/Data-and-Society-Final/raw/refs/heads/main/NSDUH%20dataset/NSDUH_2023.Rdata")
 ```
 
 
