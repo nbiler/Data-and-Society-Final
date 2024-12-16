@@ -12,25 +12,6 @@ library(usmap)
 
 ```
 
-```{r}
-# Example device variable
-device <- "Mac"  # or "PC"
-
-# Create logical variables
-is_mac <- device == "Mac"
-is_pc <- device == "PC"
-```
-
-```{r, eval = is_mac}
-#For Mac
-load("~/Documents/GitHub/Data-and-Society-Final/NSDUH dataset/NSDUH_2023.Rdata")
-```
-
-```{r, eval = is_pc}
-#For PC
-load("~/GitHub/Data-and-Society-Final/NSDUH dataset/NSDUH_2023.Rdata")
-
-```
 
 
 
