@@ -15,7 +15,9 @@ drug_df <- puf2023_102124
 
 
 ```{r}
-c
+drug_df %>% 
+  select(ILLFLAG) %>% 
+  table()
 ```
 
 
