@@ -21,4 +21,41 @@ drug_df %>%
 ```
 
 
+Need to do more research but this graph shows that sex really doesnt effect if one uses drugs.
+Maybe I should look at it in last year/month
+
+```{r}
+drug_df %>% 
+  select(ILLFLAG, IRSEX) %>% 
+  mutate(ILLFLAG_LAB = case_when(ILLFLAG == 0 ~ "Never Used",
+                                 ILLFLAG == 1 ~ "Ever Used"),
+         IRSEX_LAB = case_when(IRSEX == 1 ~ "Male",
+                                IRSEX == 2 ~ "Female")) %>% 
+  group_by(IRSEX_LAB, ILLFLAG_LAB) %>% 
+  tally() %>% 
+  mutate(prop.sex = prop.table(n)) %>% 
+  ggplot(aes(x = IRSEX_LAB, y = prop.sex, fill = ILLFLAG_LAB)) +
+  geom_col()
+```
+
+
+By age (should also do last year/month)
+```{r}
+drug_df %>% 
+  select(ILLYR, CATAG6) %>%
+  mutate(CATAG6_LAB = case_when(CATAG6 == 1 ~ "12-17 Years Old",
+                                CATAG6 == 2 ~ "18-25 Years Old",
+                                CATAG6 == 3 ~ "26-34 Years Old",
+                                CATAG6 == 4 ~ "35-49 Years Old",
+                                CATAG6 == 5 ~ "50-64 Years Old",
+                                CATAG6 == 6 ~ "65 or Older"),
+         ILLYR_LAB = case_when(ILLYR == 0 ~ "Did not use in past year",
+                                 ILLYR == 1 ~ "Used in past year")) %>% 
+  group_by(CATAG6_LAB, ILLYR_LAB) %>% 
+  tally() %>% 
+  mutate(prop.age = prop.table(n)) %>% 
+  ggplot(aes(x = CATAG6_LAB, y = prop.age, fill = ILLYR_LAB)) +
+  geom_col()
+```
+
 
