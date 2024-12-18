@@ -21,7 +21,7 @@ drug_df %>%
 ```
 
 
-Need to do more research but this graph shows that sex really doesnt effect if one uses drugs.
+Need to do more research but this graph shows that sex really doesn't effect if one uses drugs.
 Maybe I should look at it in last year/month
 
 ```{r}
@@ -56,6 +56,15 @@ drug_df %>%
   mutate(prop.age = prop.table(n)) %>% 
   ggplot(aes(x = CATAG6_LAB, y = prop.age, fill = ILLYR_LAB)) +
   geom_col()
+```
+
+By race
+```{r}
+drug_df %>% 
+  select(ILLFLAG, NEWRACE2) %>% 
+  mutate(ILLFLAG_LAB = case_when(ILLFLAG == 0 ~ "Never Used",
+                                 ILLFLAG == 1 ~ "Ever Used"),
+         NEWRACE2_LAB = case_when(NEWRACE2 == 1 ~ "NonHisp White"))
 ```
 
 
