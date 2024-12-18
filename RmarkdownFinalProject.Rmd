@@ -62,9 +62,100 @@ By race
 ```{r}
 drug_df %>% 
   select(ILLFLAG, NEWRACE2) %>% 
-  mutate(ILLFLAG_LAB = case_when(ILLFLAG == 0 ~ "Never Used",
-                                 ILLFLAG == 1 ~ "Ever Used"),
-         NEWRACE2_LAB = case_when(NEWRACE2 == 1 ~ "NonHisp White"))
+  mutate(
+    ILLFLAG_LAB = factor(case_when(
+      ILLFLAG == 0 ~ "Never Used",
+      ILLFLAG == 1 ~ "Ever Used"
+    ), levels = c("Never Used", "Ever Used")),
+    
+    NEWRACE2_LAB = case_when(
+      NEWRACE2 == 1 ~ "NonHisp White",
+      NEWRACE2 == 2 ~ "NonHisp Black/Afr Am",
+      NEWRACE2 == 3 ~ "NonHisp Native Am/AK Native",
+      NEWRACE2 == 4 ~ "NonHisp Native HI/Other Pac Is",
+      NEWRACE2 == 5 ~ "NonHisp Asian",
+      NEWRACE2 == 6 ~ "NonHisp more than one race",
+      NEWRACE2 == 7 ~ "Hispanic"
+    )) %>% 
+  group_by(NEWRACE2_LAB, ILLFLAG_LAB) %>% 
+  tally() %>% 
+  mutate(prop_race = prop.table(n)) %>% 
+  ggplot(aes(x = NEWRACE2_LAB, y = prop_race, fill = ILLFLAG_LAB)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+
+```
+Personal Income
+```{r}
+drug_df %>% 
+  select(ILLFLAG, IRPINC3) %>% 
+  mutate(
+  ILLFLAG_LAB = factor(case_when(
+    ILLFLAG == 0 ~ "Never Used",
+    ILLFLAG == 1 ~ "Ever Used"
+  ), levels = c("Never Used", "Ever Used")),
+  
+  IRPINC3_LAB = factor(case_when(
+    IRPINC3 == 1 ~ "Less than $10,000 (Including Loss)",
+    IRPINC3 == 2 ~ "$10,000 - $19,999",
+    IRPINC3 == 3 ~ "$20,000 - $29,999",
+    IRPINC3 == 4 ~ "$30,000 - $39,999",
+    IRPINC3 == 5 ~ "$40,000 - $49,999",
+    IRPINC3 == 6 ~ "$50,000 - $74,999",
+    IRPINC3 == 7 ~ "$75,000 or more"
+  ), levels = c(
+    "Less than $10,000 (Including Loss)",
+    "$10,000 - $19,999",
+    "$20,000 - $29,999",
+    "$30,000 - $39,999",
+    "$40,000 - $49,999",
+    "$50,000 - $74,999",
+    "$75,000 or more"
+  ))
+) %>% 
+  group_by(IRPINC3_LAB, ILLFLAG_LAB) %>% 
+  tally() %>% 
+  mutate(prop_inc = prop.table(n)) %>% 
+  ggplot(aes(x = IRPINC3_LAB, y = prop_inc, fill = ILLFLAG_LAB)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
 
+Family Income
+```{r}
+drug_df %>% 
+  select(ILLFLAG, IRFAMIN3) %>% 
+  mutate(
+  ILLFLAG_LAB = factor(case_when(
+    ILLFLAG == 0 ~ "Never Used",
+    ILLFLAG == 1 ~ "Ever Used"
+  ), levels = c("Never Used", "Ever Used")),
+  
+  IRFAMIN3_LAB = factor(case_when(
+    IRFAMIN3 == 1 ~ "Less than $10,000 (Including Loss)",
+    IRFAMIN3 == 2 ~ "$10,000 - $19,999",
+    IRFAMIN3 == 3 ~ "$20,000 - $29,999",
+    IRFAMIN3 == 4 ~ "$30,000 - $39,999",
+    IRFAMIN3 == 5 ~ "$40,000 - $49,999",
+    IRFAMIN3 == 6 ~ "$50,000 - $74,999",
+    IRFAMIN3 == 7 ~ "$75,000 or more"
+  ), levels = c(
+    "Less than $10,000 (Including Loss)",
+    "$10,000 - $19,999",
+    "$20,000 - $29,999",
+    "$30,000 - $39,999",
+    "$40,000 - $49,999",
+    "$50,000 - $74,999",
+    "$75,000 or more"
+  ))
+) %>% 
+  group_by(IRFAMIN3_LAB, ILLFLAG_LAB) %>% 
+  tally() %>% 
+  mutate(prop_inc = prop.table(n)) %>% 
+  ggplot(aes(x = IRFAMIN3_LAB, y = prop_inc, fill = ILLFLAG_LAB)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
