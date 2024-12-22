@@ -7,25 +7,140 @@ date: "2024-12-13"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(usmap)
+library(scales)
+library(kableExtra)
+library(knitr)
+library(gt)
+
 
 load(url("https://github.com/nbiler/Data-and-Society-Final/raw/refs/heads/main/NSDUH%20dataset/NSDUH_2023.Rdata"))
 drug_df <- puf2023_102124
 ```
-
-
-```{r}
+```{r, echo=FALSE}
 drug_df %>% 
-  select(ILLFLAG) %>% 
-  table()
+  select(ILLFLAG, ILLYR, ILLMON) %>%
+  group_by(ILLFLAG, ILLYR, ILLMON) %>% 
+  tally() %>% 
+  mutate(whenuse = case_when(
+    ILLFLAG == 0 ~ "Never used",
+    ILLFLAG == 1 & ILLYR == 0 ~ "Used but not in past year",
+    ILLYR == 1 & ILLMON == 0 ~ "Used in past year but not in past month",
+    ILLMON == 1 ~ "Used in past month"
+  )) %>%
+  ungroup() %>% 
+  mutate(prop = prop.table(n)) %>% 
+  select(whenuse, prop) %>% 
+  rename('When used illicit drugs last' = whenuse,
+         'Percentage of individuals' = prop) %>% 
+  gt() %>% 
+  tab_header(
+    title = "Drug Use Distribution",
+    subtitle = "By Time of Use"
+  ) %>% 
+  fmt_percent(
+    columns = "Percentage of individuals", 
+    decimals = 2
+  ) %>% 
+  cols_label(
+    `When used illicit drugs last` = "When Drugs Last Used",
+    `Percentage of individuals` = "Percent"
+  )
 ```
-
-
-### By sex
-### Need to do more research but this graph shows that sex really doesn't effect if one uses drugs.
-### Maybe I should look at it in last year/month
-
-```{r}
+### By race for college students aged 18-22 over last 12 months
+```{r, echo=FALSE}
+drug_df %>% 
+  filter(ENRLCOLLST2 == 1|
+           ENRLCOLLST2 == 2) %>% 
+  select(ILLYR, NEWRACE2) %>% 
+  mutate(
+    ILLYR_LAB = case_when(ILLYR == 0 ~ "Did not use in past year",
+                                 ILLYR == 1 ~ "Used in past year"),
+    
+    NEWRACE2_LAB = case_when(
+      NEWRACE2 == 1 ~ "White",
+      NEWRACE2 == 2 ~ "Black/African American",
+      NEWRACE2 == 3 ~ "Native American/Alaska Native",
+      NEWRACE2 == 4 ~ "Native Hawaiian/Other Pacific Islander",
+      NEWRACE2 == 5 ~ "Asian",
+      NEWRACE2 == 6 ~ "More than one race",
+      NEWRACE2 == 7 ~ "Hispanic"
+    )) %>% 
+  group_by(NEWRACE2_LAB, ILLYR_LAB) %>% 
+  tally() %>% 
+  mutate(prop_race = prop.table(n)) %>%
+  filter(ILLYR_LAB == "Used in past year") %>%
+  ggplot(aes(x = NEWRACE2_LAB, y = prop_race)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 20, hjust = 1)) +
+  labs(title = "Illicit drug use in past year by race for College Students aged 18-22",
+       x = "Race",
+       y = "Percentage which used in past year",
+       caption = "Source: NSDUH") +
+  scale_y_continuous(labels = scales::percent)
+```
+### Mental health in past month vs used drugs in last month for 18-29 years old
+```{r, echo=FALSE}
+drug_df %>% 
+  filter(AGE3 == 4 |
+           AGE3 == 5 |
+           AGE3 == 6 |
+           AGE3 == 7) %>% 
+  select(KSSLR6MON, ILLMON) %>%
+  mutate(ILLMON_LAB = factor(case_when(
+    ILLMON == 0 ~ "Did not use in past month",
+    ILLMON == 1 ~ "Used in past month"
+  ), levels = c("Did not use in past month", "Used in past month"))) %>% 
+  group_by(KSSLR6MON, ILLMON_LAB) %>% 
+  tally() %>% 
+  mutate(prop_KSS = prop.table(n)) %>% 
+  filter(ILLMON_LAB == "Used in past month") %>% 
+  ggplot(aes(x = KSSLR6MON, y = prop_KSS)) +
+  geom_col(fill = "blue") +
+  coord_cartesian(xlim = c(0, 24)) +
+  scale_y_continuous(labels = scales::percent) +
+  labs()
+```
+### If used in last month vs mental health 18-29 year olds
+```{r, echo=FALSE}
+drug_df %>% 
+  filter(AGE3 == 4 |
+           AGE3 == 5 |
+           AGE3 == 6 |
+           AGE3 == 7) %>% 
+  select(KSSLR6MON, ILLMON) %>%
+  filter(complete.cases(.)) %>% 
+  mutate(ILLMON_LAB = factor(case_when(
+    ILLMON == 0 ~ "Did not use in past month",
+    ILLMON == 1 ~ "Used in past month"
+  ), levels = c("Did not use in past month", "Used in past month"))) %>% 
+  group_by(ILLMON_LAB) %>%
+  summarise(avg.KSS = mean(KSSLR6MON)) %>% 
+  ggplot(aes(x = ILLMON_LAB, y = avg.KSS, fill = ILLMON_LAB)) +
+  geom_col()
+```
+### poverty last mon
+```{r, echo=FALSE}
+drug_df %>% 
+  select(ILLMON, POVERTY3) %>% 
+  filter(complete.cases(.)) %>% 
+   mutate(ILLMON_LAB = factor(case_when(
+    ILLMON == 0 ~ "Has not used in last month",
+    ILLMON == 1 ~ "Used in last month"
+  ), levels = c("Has not used in last mont", "Used in last month")),
+  POVERTY3_LAB = factor(case_when(
+    POVERTY3 == 1 ~ "Living in poverty",
+    POVERTY3 == 2 ~ "Income above Federal Poverty Threshold",
+    POVERTY3 == 3 ~ "Income above Federal Poverty Threshold"),
+    levels = c("Living in poverty", "Income above Federal Poverty Threshold"))) %>% 
+  group_by(POVERTY3_LAB, ILLMON_LAB) %>% 
+  tally() %>% 
+  mutate(prop_pov = prop.table(n)) %>% 
+  filter(ILLMON_LAB == "Used in last month") %>% 
+  ggplot(aes(x = POVERTY3_LAB, y = prop_pov)) +
+  geom_col()
+```
+```{r eval= FALSE, include=FALSE}
+#By sex
 drug_df %>% 
   select(ILLFLAG, IRSEX) %>% 
   mutate(ILLFLAG_LAB = case_when(ILLFLAG == 0 ~ "Never Used",
@@ -38,9 +153,8 @@ drug_df %>%
   ggplot(aes(x = IRSEX_LAB, y = prop.sex, fill = ILLFLAG_LAB)) +
   geom_col()
 ```
-
-### By sex for college students aged 18-22 over last 12 months
-```{r}
+```{r eval= FALSE, include=FALSE}
+# By sex for college students aged 18-22 over last 12 months
 drug_df %>% 
   filter(ENRLCOLLST2 == 1|
            ENRLCOLLST2 == 2) %>%
@@ -55,10 +169,8 @@ drug_df %>%
   ggplot(aes(x = IRSEX_LAB, y = prop.sex, fill = ILLYR_LAB)) +
   geom_col()
 ```
-
-
-### By age
-```{r}
+```{r eval= FALSE, include=FALSE}
+# By age
 drug_df %>% 
   select(ILLYR, CATAG6) %>%
   mutate(CATAG6_LAB = case_when(CATAG6 == 1 ~ "12-17 Years Old",
@@ -75,10 +187,8 @@ drug_df %>%
   ggplot(aes(x = CATAG6_LAB, y = prop.age, fill = ILLYR_LAB)) +
   geom_col()
 ```
-
-
-### By race
-```{r}
+```{r eval= FALSE, include=FALSE}
+# By race
 drug_df %>% 
   select(ILLFLAG, NEWRACE2) %>% 
   mutate(
@@ -105,36 +215,8 @@ drug_df %>%
   
 
 ```
-
-### By race for college students aged 18-22 over last 12 months
-```{r}
-drug_df %>% 
-  filter(ENRLCOLLST2 == 1|
-           ENRLCOLLST2 == 2) %>% 
-  select(ILLYR, NEWRACE2) %>% 
-  mutate(
-    ILLYR_LAB = case_when(ILLYR == 0 ~ "Did not use in past year",
-                                 ILLYR == 1 ~ "Used in past year"),
-    
-    NEWRACE2_LAB = case_when(
-      NEWRACE2 == 1 ~ "NonHisp White",
-      NEWRACE2 == 2 ~ "NonHisp Black/Afr Am",
-      NEWRACE2 == 3 ~ "NonHisp Native Am/AK Native",
-      NEWRACE2 == 4 ~ "NonHisp Native HI/Other Pac Is",
-      NEWRACE2 == 5 ~ "NonHisp Asian",
-      NEWRACE2 == 6 ~ "NonHisp more than one race",
-      NEWRACE2 == 7 ~ "Hispanic"
-    )) %>% 
-  group_by(NEWRACE2_LAB, ILLYR_LAB) %>% 
-  tally() %>% 
-  mutate(prop_race = prop.table(n)) %>% 
-  ggplot(aes(x = NEWRACE2_LAB, y = prop_race, fill = ILLYR_LAB)) +
-  geom_col() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-### By race for college students aged 18-22 over last 12 months for female
-```{r}
+```{r eval= FALSE, include=FALSE}
+# By race for college students aged 18-22 over last 12 months for female
 drug_df %>% 
   filter(ENRLCOLLST2 == 1|
            ENRLCOLLST2 == 2) %>% 
@@ -145,12 +227,12 @@ drug_df %>%
                                  ILLYR == 1 ~ "Used in past year"),
     
     NEWRACE2_LAB = case_when(
-      NEWRACE2 == 1 ~ "NonHisp White",
-      NEWRACE2 == 2 ~ "NonHisp Black/Afr Am",
-      NEWRACE2 == 3 ~ "NonHisp Native Am/AK Native",
-      NEWRACE2 == 4 ~ "NonHisp Native HI/Other Pac Is",
-      NEWRACE2 == 5 ~ "NonHisp Asian",
-      NEWRACE2 == 6 ~ "NonHisp more than one race",
+      NEWRACE2 == 1 ~ "White",
+      NEWRACE2 == 2 ~ "Black/African American",
+      NEWRACE2 == 3 ~ "Native American/Alaska Native",
+      NEWRACE2 == 4 ~ "Native Hawaiian/Other Pacific Islander",
+      NEWRACE2 == 5 ~ "Asian",
+      NEWRACE2 == 6 ~ "More than one race",
       NEWRACE2 == 7 ~ "Hispanic"
     )) %>% 
   group_by(NEWRACE2_LAB, ILLYR_LAB) %>% 
@@ -160,9 +242,8 @@ drug_df %>%
   geom_col() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
-### By race for college students aged 18-22 over last 12 months for male
-```{r}
+```{r eval= FALSE, include=FALSE}
+# By race for college students aged 18-22 over last 12 months for male
 drug_df %>% 
   filter(ENRLCOLLST2 == 1|
            ENRLCOLLST2 == 2) %>% 
@@ -173,12 +254,12 @@ drug_df %>%
                                  ILLYR == 1 ~ "Used in past year"),
     
     NEWRACE2_LAB = case_when(
-      NEWRACE2 == 1 ~ "NonHisp White",
-      NEWRACE2 == 2 ~ "NonHisp Black/Afr Am",
-      NEWRACE2 == 3 ~ "NonHisp Native Am/AK Native",
-      NEWRACE2 == 4 ~ "NonHisp Native HI/Other Pac Is",
-      NEWRACE2 == 5 ~ "NonHisp Asian",
-      NEWRACE2 == 6 ~ "NonHisp more than one race",
+      NEWRACE2 == 1 ~ "White",
+      NEWRACE2 == 2 ~ "Black/African American",
+      NEWRACE2 == 3 ~ "Native American/Alaska Native",
+      NEWRACE2 == 4 ~ "Native Hawaiian/Other Pacific Islander",
+      NEWRACE2 == 5 ~ "Asian",
+      NEWRACE2 == 6 ~ "More than one race",
       NEWRACE2 == 7 ~ "Hispanic"
     )) %>% 
   group_by(NEWRACE2_LAB, ILLYR_LAB) %>% 
@@ -188,11 +269,10 @@ drug_df %>%
   geom_col() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
-
-### Personal Income
-```{r}
+```{r eval=FALSE, include=FALSE}
+# Personal Income aged 18 and over
 drug_df %>% 
+  filter(AGE3 >= 4) %>% 
   select(ILLFLAG, IRPINC3) %>% 
   mutate(
   ILLFLAG_LAB = factor(case_when(
@@ -226,10 +306,9 @@ drug_df %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
-
-### Family Income
-```{r}
-drug_df %>% 
+```{r eval= FALSE, include=FALSE}
+# Family Income
+drug_df %>%
   select(ILLFLAG, IRFAMIN3) %>% 
   mutate(
   ILLFLAG_LAB = factor(case_when(
@@ -260,12 +339,11 @@ drug_df %>%
   mutate(prop_inc = prop.table(n)) %>% 
   ggplot(aes(x = IRFAMIN3_LAB, y = prop_inc, fill = ILLFLAG_LAB)) +
   geom_col() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(0.4, 0.6))
 ```
-
-
-### By highest level of education 24 and older
-```{r}
+```{r eval= FALSE, include=FALSE}
+# By highest level of education 24 and older
 drug_df %>% 
   select(AGE3, ILLFLAG, EDUHIGHCAT) %>% 
   filter(AGE3 >= 6) %>% 
@@ -288,9 +366,8 @@ drug_df %>%
   geom_col()
   
 ```
-
-### By sexuality
-```{r}
+```{r eval= FALSE, include=FALSE}
+# By sexuality
 drug_df %>% 
   select(ILLFLAG, SEXIDENT22) %>% 
   filter(SEXIDENT22 <= 5) %>% 
@@ -309,9 +386,8 @@ drug_df %>%
   ggplot(aes(x = SEXIDENT22_LAB, y = prop_sex, fill = ILLFLAG_LAB)) +
   geom_col()
 ```
-
-### If served in US armed forces
-```{r}
+```{r eval= FALSE, include=FALSE}
+# If served in US armed forces
 drug_df %>% 
   select(ILLFLAG, SERVICE) %>% 
   mutate(ILLFLAG_LAB = factor(case_when(
@@ -327,9 +403,8 @@ drug_df %>%
   ggplot(aes(x = SERVICE_LAB, y = prop_SERVICE, fill = ILLFLAG_LAB)) +
   geom_col()
 ```
-
-### Mental health in past month vs used drugs in last month
-```{r}
+```{r eval= FALSE, include=FALSE}
+# Mental health in past month vs used drugs in last month
 drug_df %>% 
   select(KSSLR6MON, ILLMON) %>%
   mutate(ILLMON_LAB = factor(case_when(
@@ -342,10 +417,22 @@ drug_df %>%
   ggplot(aes(x = KSSLR6MON, y = prop_KSS, fill = ILLMON_LAB)) +
   geom_col()
 ```
-
-### Employment over 18
-
-```{r}
+```{r eval = FALSE, include=FALSE}
+# If used in last month vs mental health
+drug_df %>% 
+  select(KSSLR6MON, ILLMON) %>%
+  filter(complete.cases(.)) %>% 
+  mutate(ILLMON_LAB = factor(case_when(
+    ILLMON == 0 ~ "Did not use in past month",
+    ILLMON == 1 ~ "Used in past month"
+  ), levels = c("Did not use in past month", "Used in past month"))) %>% 
+  group_by(ILLMON_LAB) %>%
+  summarise(avg.KSS = mean(KSSLR6MON)) %>% 
+  ggplot(aes(x = ILLMON_LAB, y = avg.KSS, fill = ILLMON_LAB)) +
+  geom_col()
+```
+```{r eval=FALSE, include=FALSE}
+# Employment over 18
 drug_df %>% 
   select(IRWRKSTAT18, ILLMON) %>% 
    mutate(ILLMON_LAB = factor(case_when(
@@ -362,4 +449,3 @@ drug_df %>%
   ggplot(aes(x = IRWRKSTAT18_LAB, y = prop_work, fill = ILLMON_LAB)) +
   geom_col()
 ```
-
