@@ -13,7 +13,8 @@ library(knitr)
 library(gt)
 
 
-load(url("https://github.com/nbiler/Data-and-Society-Final/raw/refs/heads/main/NSDUH%20dataset/NSDUH_2023.Rdata"))
+#load(url("https://github.com/nbiler/Data-and-Society-Final/raw/refs/heads/main/NSDUH%20dataset/NSDUH_2023.Rdata"))
+load("~/Documents/GitHub/Data-and-Society-Final/NSDUH dataset/NSDUH_2023.Rdata")
 drug_df <- puf2023_102124
 ```
 ```{r, echo=FALSE}
@@ -70,7 +71,7 @@ drug_df %>%
   mutate(prop_race = prop.table(n)) %>%
   filter(ILLYR_LAB == "Used in past year") %>%
   ggplot(aes(x = NEWRACE2_LAB, y = prop_race)) +
-  geom_col() +
+  geom_col(fill = "blue") +
   theme(axis.text.x = element_text(angle = 20, hjust = 1)) +
   labs(title = "Illicit drug use in past year by race for College Students aged 18-22",
        x = "Race",
@@ -78,6 +79,7 @@ drug_df %>%
        caption = "Source: NSDUH") +
   scale_y_continuous(labels = scales::percent)
 ```
+
 ### Mental health in past month vs used drugs in last month for 18-29 years old
 ```{r, echo=FALSE}
 drug_df %>% 
@@ -98,8 +100,13 @@ drug_df %>%
   geom_col(fill = "blue") +
   coord_cartesian(xlim = c(0, 24)) +
   scale_y_continuous(labels = scales::percent) +
-  labs()
+  labs(title = "Illicit drug use in the past month vs scale of level of psycological distress for those 18-29 years old",
+       subtitle = "Level of psycological distress calculated using the K6 questions on a scale from 0-24",
+       caption = "Source: NSDUH",
+       x = "Level of psycological distress",
+       y = "Percentage which used in past month")
 ```
+
 ### If used in last month vs mental health 18-29 year olds
 ```{r, echo=FALSE}
 drug_df %>% 
@@ -116,28 +123,39 @@ drug_df %>%
   group_by(ILLMON_LAB) %>%
   summarise(avg.KSS = mean(KSSLR6MON)) %>% 
   ggplot(aes(x = ILLMON_LAB, y = avg.KSS, fill = ILLMON_LAB)) +
-  geom_col()
+  geom_col(fill = "blue") +
+  labs(title = "If used illicit drugs in past month vs average level of psycological distress for those 18-29 years old",
+       subtitle = "Level of psycological distress calculated using the K6 questions on a scale from 0-24",
+       caption = "Source: NSDUH",
+       x = "If used illicit drugs in past month",
+       y = "Average level of psycological distress")
 ```
+
 ### poverty last mon
 ```{r, echo=FALSE}
 drug_df %>% 
   select(ILLMON, POVERTY3) %>% 
   filter(complete.cases(.)) %>% 
    mutate(ILLMON_LAB = factor(case_when(
-    ILLMON == 0 ~ "Has not used in last month",
-    ILLMON == 1 ~ "Used in last month"
-  ), levels = c("Has not used in last mont", "Used in last month")),
+    ILLMON == 0 ~ "Has not used in past month",
+    ILLMON == 1 ~ "Used in past month"
+  ), levels = c("Has not used in past month", "Used in past month")),
   POVERTY3_LAB = factor(case_when(
     POVERTY3 == 1 ~ "Living in poverty",
-    POVERTY3 == 2 ~ "Income above Federal Poverty Threshold",
-    POVERTY3 == 3 ~ "Income above Federal Poverty Threshold"),
-    levels = c("Living in poverty", "Income above Federal Poverty Threshold"))) %>% 
+    POVERTY3 == 2 ~ "Income up to 2 times Federal Poverty Threshold",
+    POVERTY3 == 3 ~ "Income above 2 times the Federal Poverty Threshold"),
+    levels = c("Living in poverty", "Income up to 2 times Federal Poverty Threshold", "Income above 2 times the Federal Poverty Threshold"))) %>% 
   group_by(POVERTY3_LAB, ILLMON_LAB) %>% 
   tally() %>% 
   mutate(prop_pov = prop.table(n)) %>% 
-  filter(ILLMON_LAB == "Used in last month") %>% 
+  filter(ILLMON_LAB == "Used in past month") %>% 
   ggplot(aes(x = POVERTY3_LAB, y = prop_pov)) +
-  geom_col()
+  geom_col(fill = "blue") +
+  labs(title = "Poverty level vs if used drugs in past month",
+       x = "Poverty level",
+       y = "Percentage of individuals who used drugs in past month") +
+  theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
+  scale_y_continuous(labels = scales::percent)
 ```
 ```{r eval= FALSE, include=FALSE}
 #By sex
