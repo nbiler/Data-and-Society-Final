@@ -13,25 +13,51 @@ library(knitr)
 library(gt)
 
 
-#load(url("https://github.com/nbiler/Data-and-Society-Final/raw/refs/heads/main/NSDUH%20dataset/NSDUH_2023.Rdata"))
-load("~/Documents/GitHub/Data-and-Society-Final/NSDUH dataset/NSDUH_2023.Rdata")
+load(url("https://github.com/nbiler/Data-and-Society-Final/raw/refs/heads/main/NSDUH%20dataset/NSDUH_2023.Rdata"))
 drug_df <- puf2023_102124
 ```
+
 ```{r, echo=FALSE}
 drug_df %>% 
-  select(ILLFLAG, ILLYR, ILLMON) %>%
-  group_by(ILLFLAG, ILLYR, ILLMON) %>% 
+  select(ILLFLAG) %>% 
+  group_by(ILLFLAG) %>% 
   tally() %>% 
-  mutate(whenuse = case_when(
-    ILLFLAG == 0 ~ "Never used",
-    ILLFLAG == 1 & ILLYR == 0 ~ "Used but not in past year",
-    ILLYR == 1 & ILLMON == 0 ~ "Used in past year but not in past month",
-    ILLMON == 1 ~ "Used in past month"
-  )) %>%
-  ungroup() %>% 
+  mutate(prop = prop.table(n),
+         whenuse = case_when(
+           ILLFLAG == 1 ~ "Used",
+           ILLFLAG == 0 ~ "Never Used"
+         )) %>% 
+  select(whenuse, prop) -> all_count
+
+drug_df %>% 
+  select(ILLYR) %>% 
+  group_by(ILLYR) %>% 
+  tally() %>% 
   mutate(prop = prop.table(n)) %>% 
+  filter(ILLYR == 1) %>% 
+  mutate(whenuse = case_when(
+    ILLYR == 1 ~ "Used in last year")) %>% 
+  select(whenuse, prop) -> yr_count
+
+drug_df %>% 
+  select(ILLMON) %>% 
+  group_by(ILLMON) %>% 
+  tally() %>% 
+  mutate(prop = prop.table(n)) %>% 
+  filter(ILLMON == 1) %>% 
+  mutate(whenuse = case_when(
+    ILLMON == 1 ~ "Used in last month")) %>% 
+  select(whenuse, prop) -> mon_count
+
+full_join(all_count,
+           yr_count,
+           by = "whenuse")  -> allyr_count
+full_join(allyr_count,
+          mon_count,
+          by = "whenuse") %>% 
+  mutate(prop = coalesce(prop.x, prop.y, prop)) %>% 
   select(whenuse, prop) %>% 
-  rename('When used illicit drugs last' = whenuse,
+rename('When used illicit drugs' = whenuse,
          'Percentage of individuals' = prop) %>% 
   gt() %>% 
   tab_header(
@@ -43,11 +69,16 @@ drug_df %>%
     decimals = 2
   ) %>% 
   cols_label(
-    `When used illicit drugs last` = "When Drugs Last Used",
+    `When used illicit drugs` = "When used illicit drugs",
     `Percentage of individuals` = "Percent"
-  )
+  ) %>% 
+  opt_table_font(
+    font = "Times New Roman"
+  ) %>% 
+  tab_source_note(
+    source_note = "Source: NSDUH")
 ```
-### By race for college students aged 18-22 over last 12 months
+
 ```{r, echo=FALSE}
 drug_df %>% 
   filter(ENRLCOLLST2 == 1|
@@ -72,16 +103,21 @@ drug_df %>%
   filter(ILLYR_LAB == "Used in past year") %>%
   ggplot(aes(x = NEWRACE2_LAB, y = prop_race)) +
   geom_col(fill = "blue") +
-  theme(axis.text.x = element_text(angle = 20, hjust = 1)) +
-  labs(title = "Illicit drug use in past year by race for College Students aged 18-22",
+  theme(axis.text.x = element_text(angle = 20, hjust = 1, family = "Times New Roman"),
+        axis.title = element_text(family = "Times New Roman"),
+        plot.title = element_text(family = "Times New Roman", hjust = 0.5),
+        legend.text = element_text(family = "Times New Roman"),
+        legend.title = element_text(family = "Times New Roman"),
+        plot.caption = element_text(family = "Times New Roman"),
+        axis.text.y = element_text(family = "Times New Roman")) +
+  labs(title = "Illicit drug use in past year by race for college students aged 18-22",
        x = "Race",
        y = "Percentage which used in past year",
        caption = "Source: NSDUH") +
   scale_y_continuous(labels = scales::percent)
 ```
 
-### Mental health in past month vs used drugs in last month for 18-29 years old
-```{r, echo=FALSE}
+```{r echo=FALSE}
 drug_df %>% 
   filter(AGE3 == 4 |
            AGE3 == 5 |
@@ -100,15 +136,25 @@ drug_df %>%
   geom_col(fill = "blue") +
   coord_cartesian(xlim = c(0, 24)) +
   scale_y_continuous(labels = scales::percent) +
-  labs(title = "Illicit drug use in the past month vs scale of level of psycological distress for those 18-29 years old",
+  theme(axis.text.x = element_text(family = "Times New Roman"),
+        axis.title = element_text(family = "Times New Roman"),
+        plot.title = element_text(family = "Times New Roman", hjust = 0.5),
+        legend.text = element_text(family = "Times New Roman"),
+        legend.title = element_text(family = "Times New Roman"),
+        plot.caption = element_text(family = "Times New Roman"),
+        axis.text.y = element_text(family = "Times New Roman"),
+        plot.subtitle = element_text(family = "Times New Roman", size = 10, hjust = 0.5)) +
+  labs(title = str_wrap("Level of psycological distress in the past month vs illicit drug use in the past month for those 18-29 years old"),
        subtitle = "Level of psycological distress calculated using the K6 questions on a scale from 0-24",
        caption = "Source: NSDUH",
-       x = "Level of psycological distress",
-       y = "Percentage which used in past month")
+       x = "Level of psycological distress in the past month",
+       y = "Percentage which used in the past month") +
+  geom_smooth(color = "red",
+              method = "lm",
+              se = FALSE)
 ```
 
-### If used in last month vs mental health 18-29 year olds
-```{r, echo=FALSE}
+```{r, eval = FALSE, include = FALSE}
 drug_df %>% 
   filter(AGE3 == 4 |
            AGE3 == 5 |
@@ -124,14 +170,60 @@ drug_df %>%
   summarise(avg.KSS = mean(KSSLR6MON)) %>% 
   ggplot(aes(x = ILLMON_LAB, y = avg.KSS, fill = ILLMON_LAB)) +
   geom_col(fill = "blue") +
-  labs(title = "If used illicit drugs in past month vs average level of psycological distress for those 18-29 years old",
+  theme(axis.text.x = element_text(angle = 20, hjust = 1, family = "Times New Roman"),
+        axis.title = element_text(family = "Times New Roman"),
+        plot.title = element_text(family = "Times New Roman", hjust = 0.5),
+        legend.text = element_text(family = "Times New Roman"),
+        legend.title = element_text(family = "Times New Roman"),
+        plot.caption = element_text(family = "Times New Roman"),
+        axis.text.y = element_text(family = "Times New Roman"),
+        plot.subtitle = element_text(family = "Times New Roman", hjust = 0.5, size = 10)) +
+  labs(title = str_wrap("Illicit drug use in the past month vs average level of psycological distress for those 18-29 years old"),
        subtitle = "Level of psycological distress calculated using the K6 questions on a scale from 0-24",
        caption = "Source: NSDUH",
        x = "If used illicit drugs in past month",
        y = "Average level of psycological distress")
 ```
 
-### poverty last mon
+```{r, echo = FALSE}
+drug_df %>% 
+  filter(AGE3 == 4 |
+           AGE3 == 5 |
+           AGE3 == 6 |
+           AGE3 == 7) %>% 
+  select(KSSLR6MON, ILLMON) %>%
+  filter(complete.cases(.)) %>% 
+  mutate(ILLMON_LAB = factor(case_when(
+    ILLMON == 0 ~ "Did not use in past month",
+    ILLMON == 1 ~ "Used in past month"
+  ), levels = c("Did not use in past month", "Used in past month"))) %>% 
+  group_by(ILLMON_LAB) %>%
+  summarise(avg.KSS = mean(KSSLR6MON)) %>% 
+  rename(
+    `Illicit drug use in the past month` = ILLMON_LAB,
+    `Average psychological distress` = avg.KSS
+  ) %>% 
+  gt() %>% 
+  tab_header(
+    title = md("**Illicit Drug Use vs. Psychological Distress**"),
+    subtitle = "Average psychological distress (K6 score: 0-24) for individuals aged 18-29"
+  ) %>% 
+  tab_source_note(
+    source_note = "Source: NSDUH"
+  ) %>% 
+  fmt_number(
+    columns = "Average psychological distress",
+    decimals = 2
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = `Illicit drug use in the past month`
+  ) %>% 
+  opt_table_font(
+    font = "Times New Roman"
+  )
+```
+
 ```{r, echo=FALSE}
 drug_df %>% 
   select(ILLMON, POVERTY3) %>% 
@@ -151,9 +243,17 @@ drug_df %>%
   filter(ILLMON_LAB == "Used in past month") %>% 
   ggplot(aes(x = POVERTY3_LAB, y = prop_pov)) +
   geom_col(fill = "blue") +
-  labs(title = "Poverty level vs if used drugs in past month",
+  theme(axis.text.x = element_text(angle = 20, hjust = 1, family = "Times New Roman"),
+        axis.title = element_text(family = "Times New Roman"),
+        plot.title = element_text(family = "Times New Roman", hjust = 0.5),
+        legend.text = element_text(family = "Times New Roman"),
+        legend.title = element_text(family = "Times New Roman"),
+        plot.caption = element_text(family = "Times New Roman"),
+        axis.text.y = element_text(family = "Times New Roman")) +
+  labs(title = "Illicit drug use in the past month vs poverty level",
        x = "Poverty level",
-       y = "Percentage of individuals who used drugs in past month") +
+       y = "Percentage of individuals who used illicit drugs in past month",
+       caption = "Source: NSDUH") +
   theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
   scale_y_continuous(labels = scales::percent)
 ```
