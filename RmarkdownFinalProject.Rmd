@@ -112,7 +112,7 @@ drug_df %>%
         axis.text.y = element_text(family = "Times New Roman")) +
   labs(title = "Illicit drug use in past year by race for college students aged 18-22",
        x = "Race",
-       y = "Percentage which used in past year",
+       y = "Percentage which used illicit drugs in the past year",
        caption = "Source: NSDUH") +
   scale_y_continuous(labels = scales::percent)
 ```
@@ -148,7 +148,7 @@ drug_df %>%
        subtitle = "Level of psycological distress calculated using the K6 questions on a scale from 0-24",
        caption = "Source: NSDUH",
        x = "Level of psycological distress in the past month",
-       y = "Percentage which used in the past month") +
+       y = "Percentage which used illicit drugs in the past month") +
   geom_smooth(color = "red",
               method = "lm",
               se = FALSE)
@@ -252,7 +252,7 @@ drug_df %>%
         axis.text.y = element_text(family = "Times New Roman")) +
   labs(title = "Illicit drug use in the past month vs poverty level",
        x = "Poverty level",
-       y = "Percentage of individuals who used illicit drugs in past month",
+       y = "Percentage which used illicit drugs in the past month",
        caption = "Source: NSDUH") +
   theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
   scale_y_continuous(labels = scales::percent)
