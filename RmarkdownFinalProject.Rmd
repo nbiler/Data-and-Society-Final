@@ -178,7 +178,7 @@ drug_df %>%
         plot.caption = element_text(family = "Times New Roman"),
         axis.text.y = element_text(family = "Times New Roman"),
         plot.subtitle = element_text(family = "Times New Roman", hjust = 0.5, size = 10)) +
-  labs(title = str_wrap("Illicit drug use in the past month vs average level of psycological distress for those 18-29 years old"),
+  labs(title = str_wrap("Illicit drug use in the past month vs. average level of psycological distress for those 18-29 years old"),
        subtitle = "Level of psycological distress calculated using the K6 questions on a scale from 0-24",
        caption = "Source: NSDUH",
        x = "If used illicit drugs in past month",
@@ -250,7 +250,7 @@ drug_df %>%
         legend.title = element_text(family = "Times New Roman"),
         plot.caption = element_text(family = "Times New Roman"),
         axis.text.y = element_text(family = "Times New Roman")) +
-  labs(title = "Illicit drug use in the past month vs poverty level",
+  labs(title = "Illicit drug use in the past month vs. poverty level",
        x = "Poverty level",
        y = "Percentage which used illicit drugs in the past month",
        caption = "Source: NSDUH") +
