@@ -36,7 +36,7 @@ drug_df %>%
   mutate(prop = prop.table(n)) %>% 
   filter(ILLYR == 1) %>% 
   mutate(whenuse = case_when(
-    ILLYR == 1 ~ "Used in last year")) %>% 
+    ILLYR == 1 ~ "Used in past year")) %>% 
   select(whenuse, prop) -> yr_count
 
 drug_df %>% 
@@ -46,7 +46,7 @@ drug_df %>%
   mutate(prop = prop.table(n)) %>% 
   filter(ILLMON == 1) %>% 
   mutate(whenuse = case_when(
-    ILLMON == 1 ~ "Used in last month")) %>% 
+    ILLMON == 1 ~ "Used in past month")) %>% 
   select(whenuse, prop) -> mon_count
 
 full_join(all_count,
